@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum Rotation {
     Left,
     Right,
@@ -16,7 +16,7 @@ impl From<&str> for Rotation {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Step {
     rotation: Rotation,
     distance: i32,
@@ -42,10 +42,60 @@ fn star_1(steps: Vec<Step>) -> i32 {
                     Rotation::Right => 1,
                 };
                 let distance = step.distance * sign;
-                let value_new = (acc.0 + distance) % 100;
+                let value_new = (acc.0 + distance).rem_euclid(100);
                 helper(
                     &steps[1..],
                     (value_new, acc.1 + if value_new == 0 { 1 } else { 0 }),
+                )
+            }
+        }
+    }
+    helper(&steps, (50, 0))
+}
+
+fn star_2(steps: Vec<Step>) -> i32 {
+    fn helper(steps: &[Step], acc: (i32, i32)) -> i32 {
+        match steps.get(0) {
+            None => acc.1,
+            Some(step) => {
+                let sign = match step.rotation {
+                    Rotation::Left => -1,
+                    Rotation::Right => 1,
+                };
+                let distance = step.distance * sign;
+                let value_new = (acc.0 + distance).rem_euclid(100);
+                let full_rotations = distance.abs() / 100;
+                let hit_zero = if value_new == 0 { 1 } else { 0 };
+                let went_past_zero = if acc.0 == 0 {
+                    0
+                } else {
+                    match step.rotation {
+                        Rotation::Left => {
+                            if step.distance.rem_euclid(100) > acc.0 {
+                                1
+                            } else {
+                                0
+                            }
+                        }
+                        Rotation::Right => {
+                            if step.distance.rem_euclid(100) + acc.0 > 100 {
+                                1
+                            } else {
+                                0
+                            }
+                        }
+                    }
+                };
+                // println!(
+                //     "{full_rotations} {hit_zero} {went_past_zero} {:?} {}",
+                //     step, acc.0
+                // );
+                helper(
+                    &steps[1..],
+                    (
+                        value_new,
+                        acc.1 + full_rotations + hit_zero + went_past_zero,
+                    ),
                 )
             }
         }
@@ -60,6 +110,7 @@ fn main() {
         .split_ascii_whitespace()
         .map(|s| s.into())
         .collect();
-    println!("steps: {:?}", steps);
-    println!("star_1: {:?}", star_1(steps));
+    // println!("steps: {:?}", steps);
+    println!("star_1: {:?}", star_1(steps.clone()));
+    println!("star_2: {:?}", star_2(steps));
 }
