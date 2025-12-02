@@ -1,4 +1,7 @@
-use std::iter::repeat;
+use std::{
+    iter::repeat,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 #[derive(Debug)]
 struct Range(std::ops::RangeInclusive<i64>);
@@ -57,15 +60,19 @@ fn main() {
     let content = std::fs::read_to_string("data/input.txt").expect("should be able to read file");
     let ranges: Vec<Range> = content.trim().split(',').map(|s| s.into()).collect();
     println!("{:?}", ranges);
+    let star_1_start = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
     let star_1: i64 = ranges
         .iter()
         .flat_map(|range| range.0.clone().filter(|&v| !is_valid(v)))
         .sum();
-    println!("{star_1}");
+    let star_1_end = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+    println!("{star_1} {:?}", star_1_end - star_1_start);
+    let star_2_start = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
     let star_2: i128 = ranges
         .iter()
         .flat_map(|range| range.0.clone().filter(|&v| !is_valid2(v)))
         .map(|v| v as i128)
         .sum();
-    println!("{star_2}");
+    let star_2_end = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+    println!("{star_2} {:?}", star_2_end - star_2_start);
 }
