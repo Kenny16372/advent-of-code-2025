@@ -44,6 +44,32 @@ impl BatteryBank {
         println!("{first} {second} {:?}", self);
         first as i64 * 10 + second as i64
     }
+
+    fn star_2(&self) -> i64 {
+        let mut result = Vec::with_capacity(12);
+        let mut start_idx = 0;
+        let mut skip_max = self.batteries.len() - 12;
+        while result.len() != result.capacity() {
+            let (start_idx_new, skip_max_new, value) = self.next_idx_skip_max(start_idx, skip_max);
+            start_idx = start_idx_new;
+            skip_max = skip_max_new;
+            result.push(value as i64);
+        }
+        println!("result vec: {:?}", result);
+
+        result.iter().fold(0, |a, b| a * 10 + b)
+    }
+
+    fn next_idx_skip_max(&self, start_idx: usize, skip_max: usize) -> (usize, usize, i8) {
+        // println!("{start_idx} {skip_max} {:?}", self.batteries);
+        self.batteries[start_idx..=(start_idx + skip_max)]
+            .iter()
+            .enumerate()
+            .rev()
+            .map(|(idx, &val)| (start_idx + idx + 1, skip_max - idx, val))
+            .max_by_key(|&(_, _, val)| val)
+            .expect("shouldn't be empty")
+    }
 }
 
 fn main() {
@@ -58,7 +84,7 @@ fn main() {
     let star_1_end = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
     println!("{star_1} {:?}", star_1_end - star_1_start);
     let star_2_start = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-    let star_2 = "";
+    let star_2: i64 = banks.iter().map(|b| b.star_2()).sum();
     let star_2_end = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
     println!("{star_2} {:?}", star_2_end - star_2_start);
 }
