@@ -41,7 +41,7 @@ impl BatteryBank {
     fn star_1(&self) -> i64 {
         let (first, idx) = self.find_first_digit();
         let second = self.find_second_digit(idx);
-        println!("{first} {second} {:?}", self);
+        // println!("{first} {second} {:?}", self);
         first as i64 * 10 + second as i64
     }
 
@@ -55,7 +55,7 @@ impl BatteryBank {
             skip_max = skip_max_new;
             result.push(value as i64);
         }
-        println!("result vec: {:?}", result);
+        // println!("result vec: {:?}", result);
 
         result.iter().fold(0, |a, b| a * 10 + b)
     }
@@ -79,12 +79,14 @@ fn main() {
         .split_ascii_whitespace()
         .map(|l| l.into())
         .collect();
-    let star_1_start = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+
+    let star_1_start = SystemTime::now();
     let star_1: i64 = banks.iter().map(|b| b.star_1()).sum();
-    let star_1_end = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-    println!("{star_1} {:?}", star_1_end - star_1_start);
-    let star_2_start = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+    let star_1_duration = SystemTime::now().duration_since(star_1_start).unwrap();
+    println!("{star_1} {:?}", star_1_duration);
+
+    let star_2_start = SystemTime::now();
     let star_2: i64 = banks.iter().map(|b| b.star_2()).sum();
-    let star_2_end = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-    println!("{star_2} {:?}", star_2_end - star_2_start);
+    let star_2_duration = SystemTime::now().duration_since(star_2_start).unwrap();
+    println!("{star_2} {:?}", star_2_duration);
 }
