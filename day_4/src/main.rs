@@ -1,6 +1,6 @@
 use std::time::SystemTime;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Warehouse {
     rolls: Vec<Vec<Option<()>>>,
 }
@@ -23,14 +23,34 @@ impl From<&str> for Warehouse {
 
 impl Warehouse {
     fn star_1(&self) -> i64 {
+        self.reachable_rolls().count() as i64
+    }
+
+    fn star_2(&self) -> i64 {
+        self.remove_reachable_rolls(0).1
+    }
+
+    fn remove_reachable_rolls(&self, acc: i64) -> (Warehouse, i64) {
+        let mut warehouse_new = self.clone();
+        let reachable_rolls = self.reachable_rolls();
+
+        let removed_count = reachable_rolls
+            .map(|(x, y)| warehouse_new.rolls[y][x] = None)
+            .count();
+        if removed_count == 0 {
+            (warehouse_new, acc)
+        } else {
+            warehouse_new.remove_reachable_rolls(acc + removed_count as i64)
+        }
+    }
+
+    fn reachable_rolls(&self) -> impl Iterator<Item = (usize, usize)> {
         let width = self.rolls[0].len();
         let height = self.rolls.len();
         (0..width)
-            .flat_map(|x| (0..height).map(move |y| (x, y)))
+            .flat_map(move |x| (0..height).map(move |y| (x, y)))
             .filter(|&(x, y)| self.rolls[y][x].is_some())
-            .map(|pos| (pos, self.count_3x3_hollow(pos)))
-            .filter(|&(_, count)| count < 4)
-            .count() as i64
+            .filter(|&pos| self.count_3x3_hollow(pos) < 4)
     }
 
     fn count_3x3_hollow(&self, pos: (usize, usize)) -> i64 {
@@ -47,10 +67,6 @@ impl Warehouse {
             .filter(|&&cell| cell.is_some())
             .count() as i64
     }
-
-    fn star_2(&self) -> i64 {
-        0
-    }
 }
 
 fn main() {
@@ -63,7 +79,7 @@ fn main() {
     println!("{star_1} {:?}", star_1_duration);
 
     let star_2_start = SystemTime::now();
-    let star_2: i64 = warehouse.star_2();
+    let star_2: i64 = warehouse.clone().star_2();
     let star_2_duration = SystemTime::now().duration_since(star_2_start).unwrap();
     println!("{star_2} {:?}", star_2_duration);
 }
