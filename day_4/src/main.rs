@@ -1,92 +1,69 @@
-use std::{
-    fmt::Display,
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::time::SystemTime;
 
 #[derive(Debug)]
-struct BatteryBank {
-    batteries: Vec<i8>,
+struct Warehouse {
+    rolls: Vec<Vec<Option<()>>>,
 }
 
-impl From<&str> for BatteryBank {
+impl From<&str> for Warehouse {
     fn from(value: &str) -> Self {
         Self {
-            batteries: value
-                .chars()
-                .map(|c| c.to_digit(10).expect("only numbers") as i8)
+            rolls: value
+                .trim()
+                .split_ascii_whitespace()
+                .map(|row| {
+                    row.chars()
+                        .map(|c| if c == '@' { Some(()) } else { None })
+                        .collect()
+                })
                 .collect(),
         }
     }
 }
 
-impl BatteryBank {
-    fn find_first_digit(&self) -> (i8, usize) {
-        self.batteries
-            .iter()
-            .enumerate()
-            .rev()
-            .skip(1)
-            .map(|(idx, &val)| (val, idx))
-            .max_by_key(|&(val, _)| val)
-            .expect("shouldn't be empty")
-    }
-
-    fn find_second_digit(&self, start_idx: usize) -> i8 {
-        *self.batteries[(start_idx + 1)..]
-            .iter()
-            .max()
-            .expect("shouldn't be empty")
-    }
-
+impl Warehouse {
     fn star_1(&self) -> i64 {
-        let (first, idx) = self.find_first_digit();
-        let second = self.find_second_digit(idx);
-        // println!("{first} {second} {:?}", self);
-        first as i64 * 10 + second as i64
+        let width = self.rolls[0].len();
+        let height = self.rolls.len();
+        (0..width)
+            .flat_map(|x| (0..height).map(move |y| (x, y)))
+            .filter(|&(x, y)| self.rolls[y][x].is_some())
+            .map(|pos| (pos, self.count_3x3_hollow(pos)))
+            .filter(|&(_, count)| count < 4)
+            .count() as i64
+    }
+
+    fn count_3x3_hollow(&self, pos: (usize, usize)) -> i64 {
+        let x = pos.0 as i32;
+        let y = pos.1 as i32;
+        ((x - 1)..=(x + 1))
+            .flat_map(|x_offset| ((y - 1)..=(y + 1)).map(move |y_offset| (x_offset, y_offset)))
+            .filter_map(|pos| match pos {
+                p if p == (x, y) => None,
+                p if p.0 < 0 || p.1 < 0 => None,
+                _ => Some((pos.0 as usize, pos.1 as usize)),
+            })
+            .filter_map(|(x, y)| self.rolls.get(y).and_then(|row| row.get(x)))
+            .filter(|&&cell| cell.is_some())
+            .count() as i64
     }
 
     fn star_2(&self) -> i64 {
-        let mut result = Vec::with_capacity(12);
-        let mut start_idx = 0;
-        let mut skip_max = self.batteries.len() - 12;
-        while result.len() != result.capacity() {
-            let (start_idx_new, skip_max_new, value) = self.next_idx_skip_max(start_idx, skip_max);
-            start_idx = start_idx_new;
-            skip_max = skip_max_new;
-            result.push(value as i64);
-        }
-        // println!("result vec: {:?}", result);
-
-        result.iter().fold(0, |a, b| a * 10 + b)
-    }
-
-    fn next_idx_skip_max(&self, start_idx: usize, skip_max: usize) -> (usize, usize, i8) {
-        // println!("{start_idx} {skip_max} {:?}", self.batteries);
-        self.batteries[start_idx..=(start_idx + skip_max)]
-            .iter()
-            .enumerate()
-            .rev()
-            .map(|(idx, &val)| (start_idx + idx + 1, skip_max - idx, val))
-            .max_by_key(|&(_, _, val)| val)
-            .expect("shouldn't be empty")
+        0
     }
 }
 
 fn main() {
     let content = std::fs::read_to_string("data/input.txt").expect("should be able to read file");
-    let banks: Vec<BatteryBank> = content
-        .trim()
-        .split_ascii_whitespace()
-        .map(|l| l.into())
-        .collect();
+    let warehouse: Warehouse = content.as_str().into();
 
     let star_1_start = SystemTime::now();
-    let star_1: i64 = banks.iter().map(|b| b.star_1()).sum();
+    let star_1: i64 = warehouse.star_1();
     let star_1_duration = SystemTime::now().duration_since(star_1_start).unwrap();
     println!("{star_1} {:?}", star_1_duration);
 
     let star_2_start = SystemTime::now();
-    let star_2: i64 = banks.iter().map(|b| b.star_2()).sum();
+    let star_2: i64 = warehouse.star_2();
     let star_2_duration = SystemTime::now().duration_since(star_2_start).unwrap();
     println!("{star_2} {:?}", star_2_duration);
 }
