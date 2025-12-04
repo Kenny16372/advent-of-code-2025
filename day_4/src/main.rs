@@ -79,7 +79,7 @@ fn main() {
     println!("{star_1} {:?}", star_1_duration);
 
     let star_2_start = SystemTime::now();
-    let star_2: i64 = warehouse.clone().star_2();
+    let star_2: i64 = warehouse.star_2();
     let star_2_duration = SystemTime::now().duration_since(star_2_start).unwrap();
     println!("{star_2} {:?}", star_2_duration);
 }
