@@ -13,14 +13,23 @@ await db.exec(
   CREATE TABLE IF NOT EXISTS range (
     range int8range
   );
-` +
-    ranges
-      .split("\n")
-      .map((range) => {
-        const [low, high] = range.split("-");
-        return `INSERT INTO range VALUES ('[${low}, ${high}]'::int8range);`;
-      })
-      .join("\n")
+  CREATE TABLE IF NOT EXISTS range_staging (
+    low INT8,
+    high INT8
+  );
+  TRUNCATE TABLE range_staging;
+  TRUNCATE TABLE range;
+  COPY range_staging FROM '/dev/blob'
+  (
+    FORMAT text,
+    DELIMITER '-',
+    ON_ERROR ignore,
+    FREEZE
+    );
+    INSERT INTO range
+    SELECT int8range(stg.low, stg.high, '[]') from range_staging stg;
+    `,
+  { blob: new Blob([ranges]) }
 );
 
 await db.exec(
@@ -28,12 +37,15 @@ await db.exec(
   CREATE TABLE IF NOT EXISTS id (
     id INT8
   );
-` +
-    ids
-      .split("\n")
-      .filter(Boolean)
-      .map((id) => `INSERT INTO id VALUES (${id});`)
-      .join("\n")
+  TRUNCATE TABLE id;
+  COPY id FROM '/dev/blob'
+  (
+    FORMAT text,
+    ON_ERROR ignore,
+    FREEZE
+  );
+`,
+  { blob: new Blob([ids]) }
 );
 
 console.timeEnd("parsing");
