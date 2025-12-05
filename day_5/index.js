@@ -76,7 +76,7 @@ console.log(star1_2.rows[0].count);
 console.time("star2");
 const star2 = await db.query(`
   WITH multi AS (
-    SELECT range_agg(range) FROM (SELECT range FROM range)
+    SELECT range_agg(range) FROM range
   ),
   unnested AS (
     SELECT unnest(range_agg) FROM multi
