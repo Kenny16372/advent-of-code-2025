@@ -2,7 +2,8 @@ import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
 
 const db = new PGlite();
-
+console.time("total");
+console.time("parsing");
 const input = readFileSync("data/input.txt", "utf-8");
 // const input = readFileSync("data/input_small.txt", "utf-8");
 const [ranges, ids] = input.split("\n\n");
@@ -35,12 +36,17 @@ await db.exec(
       .join("\n")
 );
 
+console.timeEnd("parsing");
+
+console.time("star1");
 const star1 = await db.query(`
   SELECT COUNT(*) FROM id i
   WHERE EXISTS (SELECT 1/0 FROM range r WHERE r.range @> i.id);
 `);
+console.timeEnd("star1");
 console.log(star1.rows[0].count);
 
+console.time("star2");
 const star2 = await db.query(`
   WITH multi AS (
     SELECT range_agg(range) FROM (SELECT range FROM range)
@@ -53,4 +59,6 @@ const star2 = await db.query(`
   )
   SELECT sum(size) from size;
 `);
+console.timeEnd("star2");
 console.log(star2.rows);
+console.timeEnd("total");
