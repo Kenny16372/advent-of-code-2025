@@ -1,7 +1,11 @@
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
+import { btree_gist } from "@electric-sql/pglite/contrib/btree_gist";
 
-const db = new PGlite();
+const db = new PGlite({
+  extensions: { btree_gist },
+});
+
 console.time("total");
 console.time("parsing");
 const input = readFileSync("data/input.txt", "utf-8");
@@ -13,6 +17,8 @@ await db.exec(
   CREATE TABLE IF NOT EXISTS range (
     range int8range
   );
+  -- the index makes the join faster (16ms -> 13ms), but slows the where exists down (11ms -> 14ms)
+  -- CREATE INDEX IF NOT EXISTS range_idx ON range USING GIST(range);
   CREATE TABLE IF NOT EXISTS range_staging (
     low INT8,
     high INT8
