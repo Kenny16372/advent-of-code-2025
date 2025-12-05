@@ -26,8 +26,8 @@ await db.exec(
     ON_ERROR ignore,
     FREEZE
     );
-    INSERT INTO range
-    SELECT int8range(stg.low, stg.high, '[]') from range_staging stg;
+  INSERT INTO range
+  SELECT int8range(stg.low, stg.high, '[]') from range_staging stg;
     `,
   { blob: new Blob([ranges]) }
 );
