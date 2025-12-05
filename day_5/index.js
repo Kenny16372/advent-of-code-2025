@@ -45,6 +45,15 @@ const star1 = await db.query(`
 `);
 console.timeEnd("star1");
 console.log(star1.rows[0].count);
+console.time("star1_2");
+const star1_2 = await db.query(`
+  SELECT COUNT(*) FROM (
+    SELECT DISTINCT i.id FROM id i
+    JOIN range r ON r.range @> i.id
+  );
+`);
+console.timeEnd("star1_2");
+console.log(star1_2.rows[0].count);
 
 console.time("star2");
 const star2 = await db.query(`
