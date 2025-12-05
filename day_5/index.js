@@ -81,5 +81,5 @@ const star2 = await db.query(`
   SELECT sum(size) from size;
 `);
 console.timeEnd("star2");
-console.log(star2.rows);
+console.log(star2.rows[0].sum);
 console.timeEnd("total");
