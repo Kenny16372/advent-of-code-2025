@@ -1,85 +1,98 @@
 use std::time::SystemTime;
 
-#[derive(Debug, Clone)]
-struct Warehouse {
-    rolls: Vec<Vec<Option<()>>>,
+// Source - https://stackoverflow.com/a/64499219
+// Posted by Netwave, modified by community. See post 'Timeline' for change history
+// Retrieved 2025-12-06, License - CC BY-SA 4.0
+
+fn transpose<T>(v: Vec<Vec<T>>) -> Vec<Vec<T>> {
+    assert!(!v.is_empty());
+    let len = v[0].len();
+    let mut iters: Vec<_> = v.into_iter().map(|n| n.into_iter()).collect();
+    (0..len)
+        .map(|_| {
+            iters
+                .iter_mut()
+                .map(|n| n.next().unwrap())
+                .collect::<Vec<T>>()
+        })
+        .collect()
 }
 
-impl From<&str> for Warehouse {
+#[derive(Debug, Clone)]
+enum Op {
+    Add,
+    Mul,
+}
+
+#[derive(Debug, Clone)]
+struct Question {
+    op: Op,
+    numbers: Vec<i64>,
+}
+
+impl Question {
+    fn solve(&self) -> i64 {
+        match self.op {
+            Op::Add => self.numbers.iter().fold(0, |a, &b| a + b),
+            Op::Mul => self.numbers.iter().fold(1, |a, &b| a * b),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+struct Homework {
+    questions: Vec<Question>,
+}
+
+impl From<&str> for Homework {
     fn from(value: &str) -> Self {
+        let spreadsheet: Vec<Vec<&str>> = value
+            .lines()
+            .map(|l| l.split_ascii_whitespace().collect())
+            .collect();
+        let transposed = transpose(spreadsheet);
         Self {
-            rolls: value
-                .trim()
-                .split_ascii_whitespace()
-                .map(|row| {
-                    row.chars()
-                        .map(|c| if c == '@' { Some(()) } else { None })
-                        .collect()
+            questions: transposed
+                .iter()
+                .map(|q| {
+                    let numbers: Vec<i64> = q
+                        .iter()
+                        .take(q.len() - 1)
+                        .map(|s| s.parse().expect("should be a number"))
+                        .collect();
+                    let op = match *q.last().expect("should not be empty") {
+                        "*" => Op::Mul,
+                        "+" => Op::Add,
+                        _ => unreachable!(),
+                    };
+                    Question { numbers, op }
                 })
                 .collect(),
         }
     }
 }
 
-impl Warehouse {
+impl Homework {
     fn star_1(&self) -> i64 {
-        self.reachable_rolls().count() as i64
+        self.questions.iter().map(|q| q.solve()).sum()
     }
 
     fn star_2(&self) -> i64 {
-        self.remove_reachable_rolls(0).1
-    }
-
-    fn remove_reachable_rolls(&self, acc: i64) -> (Warehouse, i64) {
-        let mut warehouse_new = self.clone();
-        let reachable_rolls = self.reachable_rolls();
-
-        let removed_count = reachable_rolls
-            .map(|(x, y)| warehouse_new.rolls[y][x] = None)
-            .count();
-        if removed_count == 0 {
-            (warehouse_new, acc)
-        } else {
-            warehouse_new.remove_reachable_rolls(acc + removed_count as i64)
-        }
-    }
-
-    fn reachable_rolls(&self) -> impl Iterator<Item = (usize, usize)> {
-        let width = self.rolls[0].len();
-        let height = self.rolls.len();
-        (0..width)
-            .flat_map(move |x| (0..height).map(move |y| (x, y)))
-            .filter(|&(x, y)| self.rolls[y][x].is_some())
-            .filter(|&pos| self.count_3x3_hollow(pos) < 4)
-    }
-
-    fn count_3x3_hollow(&self, pos: (usize, usize)) -> i64 {
-        let x = pos.0 as i32;
-        let y = pos.1 as i32;
-        ((x - 1)..=(x + 1))
-            .flat_map(|x_offset| ((y - 1)..=(y + 1)).map(move |y_offset| (x_offset, y_offset)))
-            .filter_map(|pos| match pos {
-                p if p == (x, y) => None,
-                p if p.0 < 0 || p.1 < 0 => None,
-                _ => Some((pos.0 as usize, pos.1 as usize)),
-            })
-            .filter_map(|(x, y)| self.rolls.get(y).and_then(|row| row.get(x)))
-            .filter(|&&cell| cell.is_some())
-            .count() as i64
+        0
     }
 }
 
 fn main() {
     let content = std::fs::read_to_string("data/input.txt").expect("should be able to read file");
-    let warehouse: Warehouse = content.as_str().into();
+    let homework: Homework = content.as_str().into();
 
     let star_1_start = SystemTime::now();
-    let star_1: i64 = warehouse.star_1();
+    let star_1: i64 = homework.star_1();
     let star_1_duration = SystemTime::now().duration_since(star_1_start).unwrap();
     println!("{star_1} {:?}", star_1_duration);
 
     let star_2_start = SystemTime::now();
-    let star_2: i64 = warehouse.star_2();
+    let star_2: i64 = homework.star_2();
     let star_2_duration = SystemTime::now().duration_since(star_2_start).unwrap();
     println!("{star_2} {:?}", star_2_duration);
 }
