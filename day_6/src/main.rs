@@ -138,16 +138,16 @@ impl Homework {
 
 fn main() {
     let content = std::fs::read_to_string("data/input.txt").expect("should be able to read file");
-    let homework: Homework = content.as_str().into();
 
     let star_1_start = SystemTime::now();
+    let homework: Homework = content.as_str().into();
     let star_1: i64 = homework.star_1();
     let star_1_duration = SystemTime::now().duration_since(star_1_start).unwrap();
     println!("{star_1} {:?}", star_1_duration);
 
     let star_2_start = SystemTime::now();
     let homework_star_2 = Homework::new_star_2(content.as_str());
-    println!("{:?}", homework_star_2);
+    // println!("{:?}", homework_star_2);
     let star_2: i64 = homework_star_2.star_2();
     let star_2_duration = SystemTime::now().duration_since(star_2_start).unwrap();
     println!("{star_2} {:?}", star_2_duration);
